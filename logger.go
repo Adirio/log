@@ -147,6 +147,74 @@ func (l Logger) SetLevel(alias string, level Level) error {
 |* Write related methods *|
 \*************************/
 
+func (l Logger) Trace(v ...interface{}) ([]int, []error) {
+	return l.trace(fmt.Sprint(v...))
+}
+
+func (l Logger) Tracef(format string, v ...interface{}) ([]int, []error) {
+	return l.trace(fmt.Sprintf(format, v...))
+}
+
+func (l Logger) Debug(v ...interface{}) ([]int, []error) {
+	return l.debug(fmt.Sprint(v...))
+}
+
+func (l Logger) Debugf(format string, v ...interface{}) ([]int, []error) {
+	return l.debug(fmt.Sprintf(format, v...))
+}
+
+func (l Logger) Info(v ...interface{}) ([]int, []error) {
+	return l.info(fmt.Sprint(v...))
+}
+
+func (l Logger) Infof(format string, v ...interface{}) ([]int, []error) {
+	return l.info(fmt.Sprintf(format, v...))
+}
+
+func (l Logger) Notice(v ...interface{}) ([]int, []error) {
+	return l.notice(fmt.Sprint(v...))
+}
+
+func (l Logger) Noticef(format string, v ...interface{}) ([]int, []error) {
+	return l.notice(fmt.Sprintf(format, v...))
+}
+
+func (l Logger) Warning(v ...interface{}) ([]int, []error) {
+	return l.warning(fmt.Sprint(v...))
+}
+
+func (l Logger) Warningf(format string, v ...interface{}) ([]int, []error) {
+	return l.warning(fmt.Sprintf(format, v...))
+}
+
+func (l Logger) Error(v ...interface{}) ([]int, []error) {
+	return l.error(fmt.Sprint(v...))
+}
+
+func (l Logger) Errorf(format string, v ...interface{}) ([]int, []error) {
+	return l.error(fmt.Sprintf(format, v...))
+}
+
+func (l Logger) Critical(v ...interface{}) {
+	l.critical(fmt.Sprint(v...))
+}
+
+func (l Logger) Criticalf(format string, v ...interface{}) {
+	l.critical(fmt.Sprintf(format, v...))
+}
+
+func (l Logger) Fatal(v ...interface{}) {
+	l.fatal(fmt.Sprint(v...))
+}
+
+func (l Logger) Fatalf(format string, v ...interface{}) {
+	l.fatal(fmt.Sprintf(format, v...))
+}
+
+/********************\
+|* Internal methods *|
+\********************/
+
 // Cheap integer to fixed-width decimal ASCII. Give a negative width to avoid zero-padding.
 func itoa(buf *[]byte, i int, wid int) {
 	// Assemble decimal in reverse order.
@@ -175,7 +243,7 @@ func (l Logger) log(s string, level Level) ([]int, []error) {
 		// Release lock while getting caller info as it is expensive
 		l.mu.Unlock()
 		var ok bool
-		_, file, line, ok = runtime.Caller(2)
+		_, file, line, ok = runtime.Caller(3)
 		if !ok {
 			file = "???"
 			line = 0
@@ -243,7 +311,7 @@ func (l Logger) log(s string, level Level) ([]int, []error) {
 
 	bytes := make([]int, 0, len(l.outputs))
 	errs := make([]error, 0, len(l.outputs))
-	for _, out := range(l.outputs) {
+	for _, out := range l.outputs {
 		n, err := out.write(l.buf, level)
 		bytes = append(bytes, n)
 		errs = append(errs, err)
@@ -251,72 +319,36 @@ func (l Logger) log(s string, level Level) ([]int, []error) {
 	return bytes, errs
 }
 
-func (l Logger) Trace(v ...interface{}) ([]int, []error) {
-	return l.log(fmt.Sprint(v...), LevelTrace)
+func (l Logger) trace(s string) ([]int, []error) {
+	return l.log(s, LevelTrace)
 }
 
-func (l Logger) Tracef(format string, v ...interface{}) ([]int, []error) {
-	return l.log(fmt.Sprintf(format, v...), LevelTrace)
+func (l Logger) debug(s string) ([]int, []error) {
+	return l.log(s, LevelDebug)
 }
 
-func (l Logger) Debug(v ...interface{}) ([]int, []error) {
-	return l.log(fmt.Sprint(v...), LevelDebug)
+func (l Logger) info(s string) ([]int, []error) {
+	return l.log(s, LevelInfo)
 }
 
-func (l Logger) Debugf(format string, v ...interface{}) ([]int, []error) {
-	return l.log(fmt.Sprintf(format, v...), LevelDebug)
+func (l Logger) notice(s string) ([]int, []error) {
+	return l.log(s, LevelNotice)
 }
 
-func (l Logger) Info(v ...interface{}) ([]int, []error) {
-	return l.log(fmt.Sprint(v...), LevelInfo)
+func (l Logger) warning(s string) ([]int, []error) {
+	return l.log(s, LevelWarning)
 }
 
-func (l Logger) Infof(format string, v ...interface{}) ([]int, []error) {
-	return l.log(fmt.Sprintf(format, v...), LevelInfo)
+func (l Logger) error(s string) ([]int, []error) {
+	return l.log(s, LevelError)
 }
 
-func (l Logger) Notice(v ...interface{}) ([]int, []error) {
-	return l.log(fmt.Sprint(v...), LevelNotice)
-}
-
-func (l Logger) Noticef(format string, v ...interface{}) ([]int, []error) {
-	return l.log(fmt.Sprintf(format, v...), LevelNotice)
-}
-
-func (l Logger) Warning(v ...interface{}) ([]int, []error) {
-	return l.log(fmt.Sprint(v...), LevelWarning)
-}
-
-func (l Logger) Warningf(format string, v ...interface{}) ([]int, []error) {
-	return l.log(fmt.Sprintf(format, v...), LevelWarning)
-}
-
-func (l Logger) Error(v ...interface{}) ([]int, []error) {
-	return l.log(fmt.Sprint(v...), LevelError)
-}
-
-func (l Logger) Errorf(format string, v ...interface{}) ([]int, []error) {
-	return l.log(fmt.Sprintf(format, v...), LevelError)
-}
-
-func (l Logger) Critical(v ...interface{}) {
-	s := fmt.Sprint(v...)
-	bytes, errs := l.log(s, LevelCritical)
-	panic(CriticalError{s, bytes, errs})
-}
-
-func (l Logger) Criticalf(format string, v ...interface{}) {
-	s := fmt.Sprintf(format, v...)
+func (l Logger) critical(s string) {
 	bytes, errs :=  l.log(s, LevelCritical)
 	panic(CriticalError{s, bytes, errs})
 }
 
-func (l Logger) Fatal(v ...interface{}) {
-	l.log(fmt.Sprint(v...), LevelFatal)
-	os.Exit(1)
-}
-
-func (l Logger) Fatalf(format string, v ...interface{}) {
-	l.log(fmt.Sprintf(format, v...), LevelFatal)
+func (l Logger) fatal(s string) {
+	l.log(s, LevelFatal)
 	os.Exit(1)
 }
