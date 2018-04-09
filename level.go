@@ -1,5 +1,7 @@
 package log
 
+import "errors"
+
 type Level int
 
 const (
@@ -47,7 +49,10 @@ func (l Level) String() string {
 	}
 }
 
-var maxLevelLength int
+var (
+	maxLevelLength int
+	levelError = errors.New("invalid level value")
+)
 
 func init() {
 	for l := LevelAll; l <= LevelNone; l++ {
